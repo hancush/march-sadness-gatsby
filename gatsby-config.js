@@ -5,5 +5,17 @@
  */
 
 module.exports = {
-  /* Your site config here */
+  siteMetadata: {
+    title: `march sadness`,
+  },
+  plugins: [
+    `gatsby-transformer-json`,
+    {
+      resolve: `gatsby-source-filesystem`,
+      options: {
+        name: `data`,
+        path: `./src/data/`,
+      },
+    },
+  ],
 }
