@@ -15,8 +15,8 @@ export default ({ children }) => {
   )
 
   return (
-    <div class="container">
-      <h1 class="pt-3"><img src="/img/hoop.gif" width="75" /> {data.site.siteMetadata.title}</h1>
+    <div className="container">
+      <h1 className="pt-3"><img src="/img/hoop.gif" width="75" /> {data.site.siteMetadata.title}</h1>
       {children}
     </div>
   )
