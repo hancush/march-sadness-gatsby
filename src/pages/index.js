@@ -6,8 +6,34 @@ import Layout from "../components/layout"
 import TeamNode from "../components/teamNode"
 
 class Index extends React.Component {
+  MATCHUPS = [
+    [1, 16],
+    [8, 9],
+    [5, 12],
+    [4, 13],
+    [6, 11],
+    [3, 14],
+    [7, 10],
+    [2, 15],
+  ]
+
   constructor() {
     super()
+    this.state = {
+      secret_sauce: undefined,
+      matchups: undefined,
+    }
+  }
+
+  run () {
+    /* TODO: Extend colorpicker from `react-color`
+    https://casesandberg.github.io/react-color/#examples */
+    var color = 'blue'
+    this.setState({
+      secret_sauce: color,
+      matchups: this.MATCHUPS,
+    })
+    console.log(this.state);
   }
 
   getTeamNodes (region) {
@@ -19,6 +45,19 @@ class Index extends React.Component {
   render () {
     return (
       <Layout>
+        <div className="input-group">
+          <div className="input-group-prepend">
+            <div className="input-group-text">🌈</div>
+          </div>
+          <input id="color-pick" type="text" className="form-control" />
+        </div><br />
+
+        <button className="btn btn-lg btn-dark float-right" id="go" onClick={() => this.run() }>
+          participate socially!
+        </button>
+
+        <br />
+        <br />
         <StaticQuery
         query={graphql`
           query TeamData {
