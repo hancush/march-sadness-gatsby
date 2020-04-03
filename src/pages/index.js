@@ -1,9 +1,14 @@
 import React from "react"
+import { ChromePicker } from 'react-color';
 
 import { StaticQuery, graphql } from "gatsby"
 
 import Layout from "../components/layout"
 import TeamNode from "../components/teamNode"
+
+var tinycolor = require('tinycolor2');
+var chroma = require('chroma-js');
+
 
 class Index extends React.Component {
   MATCHUPS = [
@@ -17,24 +22,27 @@ class Index extends React.Component {
     [2, 15],
   ]
 
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
       secret_sauce: undefined,
       matchups: undefined,
     }
   }
 
-  run () {
-    /* TODO: Extend colorpicker from `react-color`
-    https://casesandberg.github.io/react-color/#examples */
-    var color = 'blue'
-    this.setState({
-      secret_sauce: color,
-      matchups: this.MATCHUPS,
-    })
-    console.log(this.state);
+  updatePageStyles(hexColor) {
+    // Update background color
+    document.body.style.background = hexColor;
+
+    // Update body text color
+    const dark_secondary_light = ["#212531", "#6c757d", "#f8f9fa"];
+    document.body.style.color = tinycolor.mostReadable(hexColor, dark_secondary_light).toHexString();
   }
+
+  handleChangeComplete = (color) => {
+    this.setState({ secret_sauce: color.hex });
+    this.updatePageStyles(this.state.secret_sauce);
+  };
 
   getTeamNodes (region) {
     return region.edges.map(
@@ -43,75 +51,74 @@ class Index extends React.Component {
   }
 
   render () {
+    const color = this.state.secret_sauce ? this.state.secret_sauce : tinycolor.random().toHexString();
+
+    this.updatePageStyles(color);
+
     return (
       <Layout>
-        <div className="input-group">
-          <div className="input-group-prepend">
-            <div className="input-group-text">🌈</div>
-          </div>
-          <input id="color-pick" type="text" className="form-control" />
-        </div><br />
-
-        <button className="btn btn-lg btn-dark float-right" id="go" onClick={() => this.run() }>
-          participate socially!
-        </button>
+        <ChromePicker
+          color={ color }
+          onChangeComplete={ this.handleChangeComplete }
+        />
 
         <br />
         <br />
         <StaticQuery
-        query={graphql`
-          query TeamData {
-            east: allTeamsJson(filter: {sl: {lte: 15}}) {
-              edges {
-                node {
-                  n
-                  c
-                  s
-                  bpi
-                  id
+          query={graphql`
+            query TeamData {
+              east: allTeamsJson(filter: {sl: {lte: 15}}) {
+                edges {
+                  node {
+                    n
+                    c
+                    s
+                    bpi
+                    id
+                  }
+                }
+              }
+              west: allTeamsJson(filter: {sl: {gt: 15, lte: 31}}) {
+                edges {
+                  node {
+                    n
+                    c
+                    s
+                    bpi
+                    id
+                  }
+                }
+              }
+              south: allTeamsJson(filter: {sl: {gt: 31, lte: 47}}) {
+                edges {
+                  node {
+                    n
+                    c
+                    s
+                    bpi
+                    id
+                  }
+                }
+              }
+              midwest: allTeamsJson(filter: {sl: {gt: 47}}) {
+                edges {
+                  node {
+                    n
+                    c
+                    s
+                    bpi
+                    id
+                  }
                 }
               }
             }
-            west: allTeamsJson(filter: {sl: {gt: 15, lte: 31}}) {
-              edges {
-                node {
-                  n
-                  c
-                  s
-                  bpi
-                  id
-                }
-              }
-            }
-            south: allTeamsJson(filter: {sl: {gt: 31, lte: 47}}) {
-              edges {
-                node {
-                  n
-                  c
-                  s
-                  bpi
-                  id
-                }
-              }
-            }
-            midwest: allTeamsJson(filter: {sl: {gt: 47}}) {
-              edges {
-                node {
-                  n
-                  c
-                  s
-                  bpi
-                  id
-                }
-              }
-            }
-          }
-        `}
-        render={data => (
-          Object.values(data).map(region =>
-            this.getTeamNodes(region)
-          )
-        )} />
+          `}
+          render={data => (
+            Object.values(data).map(region =>
+              this.getTeamNodes(region)
+            )
+          )}
+        />
       </Layout>
     )
   }
