@@ -5,18 +5,17 @@ import Layout from "../components/layout"
 import Bracket from "../components/bracket"
 
 var tinycolor = require('tinycolor2');
-var chroma = require('chroma-js');
 
 
 class Index extends React.Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = {
       secretSauce: undefined,
     }
   }
 
-  updatePageStyles(hexColor) {
+  updatePageStyles (hexColor) {
     // Update background color
     document.body.style.background = hexColor;
 
