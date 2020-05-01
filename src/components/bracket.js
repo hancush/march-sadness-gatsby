@@ -5,6 +5,18 @@ import { StaticQuery, graphql } from "gatsby"
 var chroma = require('chroma-js');
 
 
+const getRegion = (index) => {
+    if ( index <= 15 ) {
+        return 'east';
+    } else if ( index <= 31 ) {
+        return 'west';
+    } else if ( index <= 47 ) {
+        return 'south';
+    } else if ( index > 47 ) {
+        return 'midwest';
+    }
+}
+
 const Team = (props) => (
     <span style={{ color: '#' + props.object.c }}>
         {props.object.s} {props.object.n}
@@ -14,8 +26,8 @@ const Team = (props) => (
 const MatchUp = (props) => (
   <div className="matchup">
     <p>
-      <Team object={props.result.winner.node} /> v. <Team object={props.result.loser.node} /><br />
-      <strong>WINNER</strong>: <Team object={props.result.winner.node} />
+      <Team object={props.result.winner} /> v. <Team object={props.result.loser} /><br />
+      <strong>WINNER</strong>: <Team object={props.result.winner} />
     </p>
   </div>
 )
@@ -25,24 +37,43 @@ const Region = (props) => (
         <h3>{props.region}</h3>
         <div className="row align-items-center h-80">
             <div className="col mx-auto result" id={props.region + '-16'}>
-                {props.results.sweet_16.map(
-                  (result) => (<MatchUp result={result} />)
-                )}
+                {props.results.sweet_16.map(result => <MatchUp result={result} />)}
             </div>
             <div className="col mx-auto result" id={props.region + '-8'}>
-                {props.results.elite_8.map(
-                  (result) => (<MatchUp result={result} />)
-                )}
+                {props.results.elite_8.map(result => <MatchUp result={result} />)}
             </div>
             <div className="col mx-auto result" id={props.region + '-4'}>
-                {props.results.final_4.map(
-                  (result) => (<MatchUp result={result} />)
-                )}
+                {props.results.final_4.map(result => <MatchUp result={result} />)}
             </div>
             <div className="col mx-auto result" id={props.region + '-2'}>
-                {props.results.championship.map(
-                  (result) => (<MatchUp result={result} />)
-                )}
+                {props.results.championship.map(result => <MatchUp result={result} />)}
+            </div>
+        </div>
+    </div>
+)
+
+const FinalFour = (props) => (
+    <div className="row align-items-center h-80">
+        <div className="col mx-auto result" id="final-4">
+            <MatchUp result={props.eastMidwestResult} />
+            <MatchUp result={props.southWestResult} />
+        </div>
+        <div className="col mx-auto result" id="final-2">
+            <MatchUp result={props.championshipResult} />
+        </div>
+        <div className="col mx-auto result text-center" id="champion">
+            <div>
+                <h2>
+                    <strong>
+                        <span role="img">🎊</span> {props.championshipResult.winner.n} <span role="img">🎊</span>
+                    </strong>
+                </h2>
+                <h3>
+                    #{props.championshipResult.winner.s} in the {getRegion(props.championshipResult.winner.sl)}<br />
+                    #1 in the country<br />
+                    #1 in your heart<br />
+                    (for the next month)
+                </h3>
             </div>
         </div>
     </div>
@@ -60,185 +91,162 @@ class Bracket extends React.Component {
         [2, 15],
     ]
 
-    constructor (props) {
-        super(props)
-        this.state = {
-            regional_winners: {}
-        }
-    }
-
-    compare_colors (base_color, team1, team2) {
-        function color_sort(a, b) {
-            var color_a = a.c ? a.c : '000000';
-            var color_b = a.c ? a.c : '000000';
-
-            return chroma.distance(base_color, color_a) - chroma.distance(base_color, color_b);
-        }
-
+    compareColors (team1, team2) {
         // order teams by color distance
-        var ordered = [team1, team2].sort(color_sort);
+        const colorSort = (a, b) => {
+            const [colorA, colorB] = [a.c ? a.c : '000000',
+                                    b.c ? b.c : '000000'];
 
-        return {
-            winner: ordered[0],
-            loser: ordered[1],
+            return chroma.distance(this.props.secretSauce, colorA) - chroma.distance(this.props.secretSauce, colorB);
         }
+
+        return [team1, team2].sort(colorSort);
     }
 
-    compare_bpi (team1, team2) {
+    compareBPI (team1, team2) {
         // order teams by bpi ranking
-        var ordered = [team1, team2].sort(function(a, b) { return a.bpi - b.bpi });
+        const ordered = [team1, team2].sort((a, b) => a.bpi - b.bpi);
 
-        // return underdog a quarter of the time
-        var underdog = Math.random() <= 0.33;
-
-        if ( underdog ) {
-            return {
-                winner: ordered[1],
-                loser: ordered[0],
-            }
+        // return underdog one-third of the time
+        if ( Math.random() <= 0.33 ) {
+            return ordered.reverse();
         } else {
-            return {
-                winner: ordered[0],
-                loser: ordered[1],
-            }
+            return ordered;
         };
     }
 
     getResult (teamA, teamB) {
-        let too_close_for_science = Math.abs(teamA.bpi - teamB.bpi) < 15;
+        const too_close_for_science = Math.abs(teamA.bpi - teamB.bpi) < 15;
+        let result;
 
         if ( too_close_for_science ) {
-            return this.compare_colors(this.props.secretSauce, teamA, teamB);
+            result = this.compareColors(teamA, teamB);
         } else {
-            return this.compare_bpi(teamA, teamB);
+            result = this.compareBPI(teamA, teamB);
+        }
+
+        return {
+            winner: result[0],
+            loser: result[1],
         }
     }
 
-    getSeedFromRegion (region, seed) {
-        return region.edges.filter((team) => team.node.s === seed)[0];
+    reduceGroup (input) {
+        const output = [];
+
+        for (let index = 0; index < input.length; index += 2) {
+            let [matchupA, matchupB] = input.slice(index, index + 2);
+
+            var result = this.getResult(matchupA.winner, matchupB.winner);
+
+            output.push(result);
+        }
+
+        return output;
     }
 
-    renderRegions (regions) {
-        let self = this;
+    getRegionalResult (region) {
+        const results = {};
+        const sweet_16 = [];
 
-        const regional_winners = {}
+        for (const [leftSeed, rightSeed] of this.DEFAULT_MATCHUPS) {
+            var result = this.getResult(
+                region.find(team => team.s === leftSeed),
+                region.find(team => team.s === rightSeed)
+            );
 
-        let rendered = Object.entries(regions).map(function(entry) {
-            let [region, teams] = entry;
+            sweet_16.push(result);
+        }
 
-            const results = {
-                sweet_16: [],
-                elite_8: [],
-                final_4: [],
-                championship: [],
-            };
+        results.sweet_16 = sweet_16;
+        results.elite_8 = this.reduceGroup(results.sweet_16);
+        results.final_4 = this.reduceGroup(results.elite_8);
+        results.championship = this.reduceGroup(results.final_4);
 
-            self.DEFAULT_MATCHUPS.forEach((matchup) => (
-                results.sweet_16.push(
-                    self.getResult(
-                        self.getSeedFromRegion(teams, matchup[0]),
-                        self.getSeedFromRegion(teams, matchup[1])
-                    )
-                )
-            ));
+        return results;
+    }
 
-            // TODO: Refactor this.
-            for ( let i = 0; i < results.sweet_16.length; i += 2 ) {
-                let [matchupA, matchupB] = results.sweet_16.slice(i, i + 2);
-                results.elite_8.push(
-                    self.getResult(matchupA.winner, matchupB.winner)
-                );
-            };
+    renderBracket (teams) {
+        const east = teams.filter(team => team.sl <= 15);
+        const west = teams.filter(team => team.sl > 15 & team.sl <= 31);
+        const south = teams.filter(team => team.sl > 31 & team.sl <= 47);
+        const midwest = teams.filter(team => team.sl > 47);
 
-            for ( let i = 0; i < results.elite_8.length; i += 2 ) {
-                let [matchupA, matchupB] = results.elite_8.slice(i, i + 2);
-                results.final_4.push(
-                    self.getResult(matchupA.winner, matchupB.winner)
-                );
-            };
+        // regional tournaments
+        const eastResults = this.getRegionalResult(east);
+        const westResults = this.getRegionalResult(west);
+        const southResults = this.getRegionalResult(south);
+        const midwestResults = this.getRegionalResult(midwest);
 
-            for ( let i = 0; i < results.final_4.length; i += 2 ) {
-                let [matchupA, matchupB] = results.final_4.slice(i, i + 2);
-                results.championship.push(
-                    self.getResult(matchupA.winner, matchupB.winner)
-                );
-            };
+        // south v. west
+        const southWestResult = this.getResult(
+            southResults.championship[0].winner,
+            westResults.championship[0].winner
+        )
 
-            regional_winners[region] = results.championship.winner;
+        // east v. midwest
+        const eastMidwestResult = this.getResult(
+            eastResults.championship[0].winner,
+            midwestResults.championship[0].winner
+        )
 
-            return (
-                <Region name={region} results={results} />
-            )
-        });
+        // championship
+        const championshipResult = this.getResult(
+            southWestResult.winner,
+            eastMidwestResult.winner
+        )
 
-        // TODO: Why is this erroring out?
-        // Error: Maximum update depth exceeded. This can happen when a component
-        // repeatedly calls setState inside componentWillUpdate or componentDidUpdate.
-        // React limits the number of nested updates to prevent infinite loops.
-        // this.setState({regional_winners: regional_winners});
-
-        console.log(this.state);
-
-        return rendered;
+        return (
+            <div>
+                <h2>
+                    <strong>~* the final four *~</strong>
+                    <small>a.k.a. who wins?</small>
+                </h2>
+                <FinalFour
+                  southWestResult={southWestResult}
+                  eastMidwestResult={eastMidwestResult}
+                  championshipResult={championshipResult}
+                />
+                <hr />
+                <h2>
+                    <strong>everything else...</strong>
+                </h2>
+                <Region region='east' results={eastResults} key='east' />
+                <hr />
+                <Region region='west' results={westResults} key='west' />
+                <hr />
+                <Region region='south' results={southResults} key='south' />
+                <hr />
+                <Region region='midwest' results={midwestResults} key='midwest' />
+            </div>
+        )
     }
 
     render () {
-        return (
-            <div className="row">
-                <h1>Secret sauce: {this.props.secretSauce}</h1>
-                <StaticQuery
-                    query={graphql`
-                        query TeamData {
-                          east: allTeamsJson(filter: {sl: {lte: 15}}) {
-                            edges {
-                              node {
-                                n
-                                c
-                                s
-                                bpi
-                                id
+        if ( this.props.secretSauce ) {
+            return (
+                <div className="row">
+                    <StaticQuery
+                        query={graphql`
+                            query TeamData {
+                              teams:allTeamsJson {
+                                nodes {
+                                  n
+                                  c
+                                  s
+                                  sl
+                                  bpi
+                                  id
+                                }
                               }
                             }
-                          }
-                          west: allTeamsJson(filter: {sl: {gt: 15, lte: 31}}) {
-                            edges {
-                              node {
-                                n
-                                c
-                                s
-                                bpi
-                                id
-                              }
-                            }
-                          }
-                          south: allTeamsJson(filter: {sl: {gt: 31, lte: 47}}) {
-                            edges {
-                              node {
-                                n
-                                c
-                                s
-                                bpi
-                                id
-                              }
-                            }
-                          }
-                          midwest: allTeamsJson(filter: {sl: {gt: 47}}) {
-                            edges {
-                              node {
-                                n
-                                c
-                                s
-                                bpi
-                                id
-                              }
-                            }
-                          }
-                        }
-                      `}
-                    render={data => this.renderRegions(data)}
-                />
-            </div>
-        )
+                          `}
+                        render={data => this.renderBracket(data.teams.nodes)}
+                    />
+                </div>
+            )
+        }
+        return null;
     }
 }
 
