@@ -18,4 +18,5 @@ module.exports = {
       },
     },
   ],
+  pathPrefix: "/march-sadness-gatsby",
 }

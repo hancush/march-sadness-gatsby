@@ -16,12 +16,14 @@ class Index extends React.Component {
   }
 
   updatePageStyles (hexColor) {
-    // Update background color
-    document.body.style.background = hexColor;
+    if (typeof document !== `undefined`) {
+      // Update background color
+      document.body.style.background = hexColor;
 
-    // Update body text color
-    const dark_secondary_light = ["#212531", "#6c757d", "#f8f9fa"];
-    document.body.style.color = tinycolor.mostReadable(hexColor, dark_secondary_light).toHexString();
+      // Update body text color
+      const dark_secondary_light = ["#212531", "#6c757d", "#f8f9fa"];
+      document.body.style.color = tinycolor.mostReadable(hexColor, dark_secondary_light).toHexString();
+    }
   }
 
   handleChangeComplete = (color) => {
