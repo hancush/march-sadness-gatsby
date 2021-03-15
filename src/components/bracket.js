@@ -7,9 +7,9 @@ var chroma = require('chroma-js');
 
 const getRegion = (index) => {
     if ( index <= 15 ) {
-        return 'east';
-    } else if ( index <= 31 ) {
         return 'west';
+    } else if ( index <= 31 ) {
+        return 'east';
     } else if ( index <= 47 ) {
         return 'south';
     } else if ( index > 47 ) {
@@ -167,8 +167,8 @@ class Bracket extends React.Component {
     }
 
     renderBracket (teams) {
-        const east = teams.filter(team => team.sl <= 15);
-        const west = teams.filter(team => team.sl > 15 & team.sl <= 31);
+        const west = teams.filter(team => team.sl <= 15);
+        const east = teams.filter(team => team.sl > 15 & team.sl <= 31);
         const south = teams.filter(team => team.sl > 31 & team.sl <= 47);
         const midwest = teams.filter(team => team.sl > 47);
 
