@@ -43,7 +43,7 @@ class Index extends React.Component {
         <p className="lead">if u love yr friends but hate basketball, let the computer do your bracket for you.</p>
 
         <marquee>
-          <h2><span role="img">🔥</span> updated for 2019 <span role="img">🔥</span></h2>
+          <h2><span role="img">🔥</span> updated for 2021 <span role="img">🔥</span></h2>
         </marquee>
 
         <p>two-thirds of the time, it returns the better team as measured by power index ranking. one-third of the time it returns the underdog. for teams within 15 spots of one another (in terms of bpi ranking), it returns whichever team has the color closest to your fave!</p>
