@@ -55,8 +55,8 @@ const Region = (props) => (
 const FinalFour = (props) => (
     <div className="row align-items-center h-80">
         <div className="col mx-auto result" id="final-4">
-            <MatchUp result={props.eastMidwestResult} />
-            <MatchUp result={props.southWestResult} />
+            <MatchUp result={props.eastWestResult} />
+            <MatchUp result={props.southMidwestResult} />
         </div>
         <div className="col mx-auto result" id="final-2">
             <MatchUp result={props.championshipResult} />
@@ -178,22 +178,22 @@ class Bracket extends React.Component {
         const southResults = this.getRegionalResult(south);
         const midwestResults = this.getRegionalResult(midwest);
 
-        // south v. west
-        const southWestResult = this.getResult(
+        // south v. midwest
+        const southMidwestResult = this.getResult(
             southResults.championship[0].winner,
-            westResults.championship[0].winner
+            midwestResults.championship[0].winner
         )
 
-        // east v. midwest
-        const eastMidwestResult = this.getResult(
+        // east v. west
+        const eastWestResult = this.getResult(
             eastResults.championship[0].winner,
-            midwestResults.championship[0].winner
+            westResults.championship[0].winner
         )
 
         // championship
         const championshipResult = this.getResult(
-            southWestResult.winner,
-            eastMidwestResult.winner
+            southMidwestResult.winner,
+            eastWestResult.winner
         )
 
         return (
@@ -203,8 +203,8 @@ class Bracket extends React.Component {
                     <small>a.k.a. who wins?</small>
                 </h2>
                 <FinalFour
-                  southWestResult={southWestResult}
-                  eastMidwestResult={eastMidwestResult}
+                  southMidwestResult={southMidwestResult}
+                  eastWestResult={eastWestResult}
                   championshipResult={championshipResult}
                 />
                 <hr />
